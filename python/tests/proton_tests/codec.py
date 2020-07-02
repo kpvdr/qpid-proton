@@ -19,8 +19,10 @@
 
 from __future__ import absolute_import
 
+import struct
 import sys
-from uuid import uuid4
+import time
+from uuid import UUID, uuid4
 
 from proton import *
 from proton._compat import raise_
@@ -221,6 +223,248 @@ class DataTest(Test):
 
   def testDescribedEmptyArray(self):
     self._testArray("long", 0, "null")
+
+  def _testPyArray(self, a1):
+      d1 = Data()
+      d1.put_py_array(a1)
+      d2 = Data()
+      d2.decode(d1.encode())
+      a2 = d2.get_py_array()
+      assert a1 == a2, 'a1=%s a2=%s' % (a1, a2)
+
+  def testEmptyNullPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.NULL))
+
+  def testNullPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.NULL, None, None, None))
+
+  def testEmptyBooleanPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.BOOL))
+
+  def testBooleanPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.BOOL, True, False, False, True))
+
+  def testEmptyBytePyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.BYTE))
+
+  def testBytePyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.BYTE,
+                              byte(-0x80),
+                              byte(-1),
+                              byte(0),
+                              byte(1),
+                              byte(0x7f)))
+
+  def testEmptyUbytePyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.UBYTE))
+
+  def testUbytePyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.UBYTE,
+                              ubyte(0),
+                              ubyte(1),
+                              ubyte(0x7f),
+                              ubyte(0x80),
+                              ubyte(0xff)))
+
+  def testEmptyShortPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.SHORT))
+
+  def testShortPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.SHORT,
+                              short(-0x8000),
+                              short(-1),
+                              short(0),
+                              short(1),
+                              short(0x7fff)))
+
+  def testEmptyUshortPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.USHORT))
+
+  def testUshortPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.USHORT,
+                              ushort(0),
+                              ushort(1),
+                              ushort(0x7fff),
+                              ushort(0x8000),
+                              ushort(0xffff)))
+
+  def testEmptyIntPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.INT))
+
+  def testIntPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.INT,
+                              int32(-0x80000000),
+                              int32(-1),
+                              int32(0),
+                              int32(1),
+                              int32(0x7fffffff)))
+
+  def testEmptyUintPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.UINT))
+
+  def testUintPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.UINT,
+                              uint(0),
+                              uint(1),
+                              uint(0x7fffffff),
+                              uint(0x80000000),
+                              uint(0xffffffff)))
+
+  def testEmptyLongPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.LONG))
+
+  def testLongPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.LONG,
+                              long(-0x8000000000000000),
+                              long(-1),
+                              long(0),
+                              long(1),
+                              long(0x7fffffffffffffff)))
+
+  def testEmptyUlongPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.ULONG))
+
+  def testUlongPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.ULONG,
+                              ulong(0),
+                              ulong(1),
+                              ulong(0x7fffffffffffffff),
+                              ulong(0x8000000000000000),
+                              ulong(0xffffffffffffffff)))
+
+  def testEmptyFloatPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.FLOAT))
+
+  def testFloatPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.FLOAT,
+                              float32(0.0),
+                              float32(struct.unpack('!f', b'\x40\x49\x0f\xf9')[0]), # 3.14
+                              float32('-inf'),
+                              float32('inf')))
+
+  def testEmptyDoublePyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.DOUBLE))
+
+  def testDoublePyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.DOUBLE,
+                              0.0,
+                              struct.unpack('!d', b'\x40\x09\x21\xff\x2e\x48\xe8\xa7')[0], # 3.1416
+                              float('-inf'),
+                              float('inf')))
+
+  def testEmptyCharPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.CHAR))
+
+  def testCharPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.CHAR,
+                              char('a'),
+                              char('Z'),
+                              char(chr(0)),
+                              char(chr(0x7f))))
+
+  def testEmptyDecimal32PyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.DECIMAL32))
+
+  def testDecimal32PyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.DECIMAL32,
+                              decimal32(0),
+                              decimal32(0x01020304),
+                              decimal32(0xfcfdfeff)))
+
+  def testEmptyDecimal64PyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.DECIMAL64))
+
+  def testDecimal64PyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.DECIMAL64,
+                              decimal64(0),
+                              decimal64(0x0102030405060708),
+                              decimal64(0xf8f9fafbfcfdfeff)))
+
+  def testEmptyDecimal128PyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.DECIMAL128))
+
+  def testDecimal128PyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.DECIMAL128,
+                              decimal128(b'\x00'*16),
+                              decimal128(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x00'),
+                              decimal128(b'\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff')))
+
+  def testEmptyTimestampPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.TIMESTAMP))
+
+  def testTimestampPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.TIMESTAMP,
+                              timestamp(0),
+                              timestamp(time.time()*1000)))
+
+  def testEmptyBinaryPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.BINARY))
+
+  def testBinaryPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.BINARY,
+                              b'',
+                              b'\x00\x01\x02test\xfe\xff',
+                              b'Hello world',
+                              b'"hello"'))
+
+  def testEmptyStringPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.STRING))
+
+  def testStringPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.STRING,
+                              '',
+                              'Hello world',
+                              '"Hello, world"',
+                              'goodbye'))
+
+  def testEmptySymbolPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.SYMBOL))
+
+  def testSymbolPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.SYMBOL,
+                              symbol(),
+                              symbol('12345'),
+                              symbol('myDomain.123'),
+                              symbol('domain.0123456789.' * 10)))
+
+  def testEmptyUUIDPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.UUID))
+
+  def testUUIDPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.UUID,
+                              UUID(int=0x0),
+                              UUID('00010203-0405-0607-0809-0a0b0c0d0e0f'),
+                              uuid4()))
+
+  def testEmptyListPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.LIST))
+
+  def testListPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.LIST,
+                              [],
+                              [1, 2, 3],
+                              [],
+                              ['aaa', 'bbb', 'ccc'],
+                              [1, 3.14, ubyte(0xdc), symbol('12345'), uuid4(), 'hello']))
+
+  def testEmptyMapPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.MAP))
+
+  def testMapPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.MAP,
+                              {},
+                              {'one':1, 'two':2, 'three':3},
+                              {},
+                              {1:'one', 2:'two', 3:'three'}))
+
+  def testEmptyArrayPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.ARRAY))
+
+  def testArrayPyArray(self):
+      self._testPyArray(Array(UNDESCRIBED, Data.ARRAY,
+                              Array(UNDESCRIBED, Data.NULL),
+                              Array(UNDESCRIBED, Data.BOOL, True, False),
+                              Array(UNDESCRIBED, Data.STRING, 'aaa', 'bbb')))
 
   def testPropertyDict(self):
     a = PropertyDict(one=1, two=2, three=3)
