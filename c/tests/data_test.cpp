@@ -25,13 +25,10 @@
 
 #include <proton/codec.h>
 #include <proton/error.h>
-//#include <proton/types.hpp>
 
 #include <cstdarg> // va_start(), va_end()
 #include <ctime> // time()
 #include <unistd.h> // ssize_t
-
-#include <iostream> // DEBUG
 
 using namespace pn_test;
 
@@ -130,18 +127,12 @@ static void check_array(const char *fmt, ...) {
 
 	// Encode src array to buf
 	ssize_t enc_size = pn_data_encode(src, buf, BUFSIZE - 1);
-	if (enc_size < 0) {
-		std::cout << "ENC ERR: " << pn_code(enc_size) << std::endl;
-		return;
-	}
+	if (enc_size < 0) return;
 
 	// Decode buf to data
 	ssize_t dec_size = pn_data_decode(data, buf, BUFSIZE - 1);
 	pn_error_t *dec_err = pn_data_error(data);
-	if (dec_size < 0) {
-		std::cout << "DEC ERR: " << pn_code(dec_size) << std::endl;
-		return;
-	}
+	if (dec_size < 0) return;
 
 	// Checks
 	CHECK(enc_size == dec_size);
