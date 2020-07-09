@@ -25,6 +25,13 @@
 
 #include <proton/codec.h>
 #include <proton/error.h>
+//#include <proton/types.hpp>
+
+#include <cstdarg> // va_start(), va_end()
+#include <ctime> // time()
+#include <unistd.h> // ssize_t
+
+#include <iostream> // DEBUG
 
 using namespace pn_test;
 
@@ -105,3 +112,141 @@ TEST_CASE("data_multiple") {
   pn_data_fill(data, "{S[iii]SI}", "foo", 1, 987, 3, "bar", 965);
   CHECK("{\"foo\"=[1, 987, 3], \"bar\"=965}" == inspect(data));
 }
+
+#define BUFSIZE 1024
+
+static void check_array(const char *fmt, ...) {
+	char buf[BUFSIZE];
+	auto_free<pn_data_t, pn_data_free> src(pn_data(1));
+	auto_free<pn_data_t, pn_data_free> data(pn_data(1));
+	pn_data_clear(src);
+	pn_data_clear(data);
+
+	// Create src array
+	va_list ap;
+	va_start(ap, fmt);
+	pn_data_vfill(src, fmt, ap);
+	va_end(ap);
+
+	// Encode src array to buf
+	ssize_t enc_size = pn_data_encode(src, buf, BUFSIZE - 1);
+	if (enc_size < 0) {
+		std::cout << "ENC ERR: " << pn_code(enc_size) << std::endl;
+		return;
+	}
+
+	// Decode buf to data
+	ssize_t dec_size = pn_data_decode(data, buf, BUFSIZE - 1);
+	pn_error_t *dec_err = pn_data_error(data);
+	if (dec_size < 0) {
+		std::cout << "DEC ERR: " << pn_code(dec_size) << std::endl;
+		return;
+	}
+
+	// Checks
+	CHECK(enc_size == dec_size);
+	CHECK(inspect(src) == inspect(data));
+}
+
+TEST_CASE("array_null") {
+	check_array("@T[]", PN_NULL);
+	check_array("@T[nnn]", PN_NULL);
+}
+
+TEST_CASE("array_bool") {
+	check_array("@T[]", PN_BOOL);
+	check_array("@T[oooo]", PN_BOOL, true, false, false, true);
+}
+
+TEST_CASE("array_ubyte") {
+	check_array("@T[]", PN_UBYTE);
+	check_array("@T[BBBBB]", PN_UBYTE, uint8_t(0), uint8_t(1), uint8_t(0x7f), uint8_t(0x80), uint8_t(0xff));
+}
+
+TEST_CASE("array_byte") {
+	check_array("@T[]", PN_BYTE);
+	check_array("@T[bbbbb]", PN_BYTE, int8_t(-0x80), int8_t(-1), int8_t(0), int8_t(1), int8_t(0x7f));
+}
+
+TEST_CASE("array_ushort") {
+	check_array("@T[]", PN_USHORT);
+	check_array("@T[HHHHH]", PN_USHORT, uint16_t(0), uint16_t(1), uint16_t(0x7fff), uint16_t(0x8000), uint16_t(0xffff));
+}
+
+TEST_CASE("array_short") {
+	check_array("@T[]", PN_SHORT);
+	check_array("@T[hhhhh]", PN_SHORT, int16_t(-0x8000), int16_t(-1), int16_t(0), int16_t(1), int16_t(0x7fff));
+}
+
+TEST_CASE("array_uint") {
+	check_array("@T[]", PN_UINT);
+	check_array("@T[IIIII]", PN_UINT, uint32_t(0), uint32_t(1), uint32_t(0x7fffffff), uint32_t(0x80000000), uint32_t(0xffffffff));
+}
+
+TEST_CASE("array_int") {
+	check_array("@T[]", PN_INT);
+	check_array("@T[iiiii]", PN_INT, int32_t(-0x80000000), int32_t(-1), int32_t(0), int32_t(1), int32_t(0x7fffffff));
+}
+
+TEST_CASE("array_ulong") {
+	check_array("@T[]", PN_ULONG);
+	check_array("@T[LLLLL]", PN_ULONG, uint64_t(0), uint64_t(1), uint64_t(0x7fffffffffffffff), uint64_t(0x8000000000000000), uint64_t(0xffffffffffffffff));
+}
+
+TEST_CASE("array_long") {
+	check_array("@T[]", PN_LONG);
+	check_array("@T[lllll]", PN_LONG, int64_t(-0x8000000000000000), int64_t(-1), int64_t(0), int64_t(1), int64_t(0x8000000000000000));
+}
+
+TEST_CASE("array_timestamp") {
+	check_array("@T[]", PN_TIMESTAMP);
+	check_array("@T[ttt]", PN_TIMESTAMP, int64_t(0), int64_t(std::time(nullptr)*1000), int64_t(0x123456789abcdef));
+}
+
+TEST_CASE("array_float") {
+	check_array("@T[]", PN_FLOAT);
+	check_array("@T[fffff]", PN_FLOAT, float(0.0), float(3.14), std::nanf, std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
+}
+
+TEST_CASE("array_double") {
+	check_array("@T[]", PN_DOUBLE);
+	check_array("@T[ddddd]", PN_DOUBLE, double(0.0), double(3.1416), std::nan, std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity());
+}
+
+TEST_CASE("array_binary") {
+	check_array("@T[]", PN_BINARY);
+	check_array("@T[zzzzz]", PN_BINARY, 0, "", 2, "\x00\x00", 4, "\x00\x01\xfe\xff", 8, "abcdefgh", 16, "1234567890123456");
+}
+
+TEST_CASE("array_string") {
+	check_array("@T[]", PN_STRING);
+	// TODO: PROTON-2248: using S and s reversed
+	check_array("@T[SSSSS]", PN_STRING, "", "hello", "bye", "abcdefg", "the quick brown fox jumped over the lazy dog 0123456789");
+}
+
+TEST_CASE("array_symbol") {
+	check_array("@T[]", PN_SYMBOL);
+	// TODO: PROTON-2248: using S and s reversed
+	check_array("@T[sssss]", PN_SYMBOL, "", "hello", "bye", "abcdefg", "the quick brown fox jumped over the lazy dog 0123456789");
+}
+
+TEST_CASE("array_array") {
+	check_array("@T[]", PN_ARRAY);
+	// TODO: PROTON-2248: using S and s reversed
+	check_array("@T[@T[]@T[ooo]@T[ii]@T[nnnn]@T[sss]]", PN_ARRAY, PN_UBYTE, PN_BOOL, false, false, true, PN_INT, -100, 100, PN_NULL, PN_SYMBOL, "aaa", "bbb", "ccc");
+}
+
+TEST_CASE("array_list") {
+	check_array("@T[]", PN_LIST);
+	// TODO: PROTON-2248: using S and s reversed
+	check_array("@T[[][oo][][iii][Sosid]]", PN_LIST, true, false, 1, 2, 3, "hello", false, "world", 43210, 2.565);
+}
+
+TEST_CASE("array_map") {
+	check_array("@T[]", PN_MAP);
+	// TODO: PROTON-2248: using S and s reversed
+	check_array("@T[{}{sS}{}{IhIoIf}{iSiSiSiS}]", PN_MAP, "key", "value", 123, -123, 255, false, 0, 0.25, 0, "zero", 1, "one", 2, "two", 3, "three");
+}
+
+
+
