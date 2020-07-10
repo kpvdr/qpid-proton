@@ -28,6 +28,7 @@
 
 #include <cstdarg> // va_start(), va_end()
 #include <ctime> // time()
+#include <string.h> // memset()
 
 using namespace pn_test;
 
@@ -109,20 +110,12 @@ TEST_CASE("data_multiple") {
   CHECK("{\"foo\"=[1, 987, 3], \"bar\"=965}" == inspect(data));
 }
 
+
 #define BUFSIZE 1024
-
-static void check_array(const char *fmt, ...) {
+static void check_encode_decode(auto_free<pn_data_t, pn_data_free>& src) {
 	char buf[BUFSIZE];
-	auto_free<pn_data_t, pn_data_free> src(pn_data(1));
 	auto_free<pn_data_t, pn_data_free> data(pn_data(1));
-	pn_data_clear(src);
 	pn_data_clear(data);
-
-	// Create src array
-	va_list ap;
-	va_start(ap, fmt);
-	pn_data_vfill(src, fmt, ap);
-	va_end(ap);
 
 	// Encode src array to buf
 	int enc_size = pn_data_encode(src, buf, BUFSIZE - 1);
@@ -140,6 +133,19 @@ static void check_array(const char *fmt, ...) {
 	// Checks
 	CHECK(enc_size == dec_size);
 	CHECK(inspect(src) == inspect(data));
+}
+
+static void check_array(const char *fmt, ...) {
+	auto_free<pn_data_t, pn_data_free> src(pn_data(1));
+	pn_data_clear(src);
+
+	// Create src array
+	va_list ap;
+	va_start(ap, fmt);
+	pn_data_vfill(src, fmt, ap);
+	va_end(ap);
+
+	check_encode_decode(src);
 }
 
 TEST_CASE("array_null") {
@@ -182,6 +188,28 @@ TEST_CASE("array_int") {
 	check_array("@T[iiiii]", PN_INT, int32_t(-0x80000000), int32_t(-1), int32_t(0), int32_t(1), int32_t(0x7fffffff));
 }
 
+TEST_CASE("array_char") {
+	// TODO: PROTON-2249: This test will pass, but is not checking array contents
+	// correctly until this issue is fixed.
+	auto_free<pn_data_t, pn_data_free> src(pn_data(1));
+	pn_data_clear(src);
+	pn_data_put_array(src, false, PN_CHAR);
+	pn_data_enter(src);
+	pn_data_exit(src);
+	check_encode_decode(src);
+
+	pn_data_clear(src);
+	pn_data_put_array(src, false, PN_CHAR);
+	pn_data_enter(src);
+	pn_data_put_char(src, pn_char_t(0));
+	pn_data_put_char(src, pn_char_t('5'));
+	pn_data_put_char(src, pn_char_t('a'));
+	pn_data_put_char(src, pn_char_t('Z'));
+	pn_data_put_char(src, pn_char_t(0x7f));
+	pn_data_exit(src);
+	check_encode_decode(src);
+}
+
 TEST_CASE("array_ulong") {
 	check_array("@T[]", PN_ULONG);
 	check_array("@T[LLLLL]", PN_ULONG, uint64_t(0), uint64_t(1), uint64_t(0x7fffffffffffffff), uint64_t(0x8000000000000000), uint64_t(0xffffffffffffffff));
@@ -194,7 +222,7 @@ TEST_CASE("array_long") {
 
 TEST_CASE("array_timestamp") {
 	check_array("@T[]", PN_TIMESTAMP);
-	check_array("@T[ttt]", PN_TIMESTAMP, int64_t(0), int64_t(std::time(nullptr)*1000), int64_t(0x123456789abcdef));
+	check_array("@T[ttt]", PN_TIMESTAMP, int64_t(0), int64_t(std::time(0)*1000), int64_t(0x123456789abcdef));
 }
 
 TEST_CASE("array_float") {
@@ -207,9 +235,65 @@ TEST_CASE("array_double") {
 	check_array("@T[ddd]", PN_DOUBLE, double(0.0), double(3.1416), double(1.234e56), double(-1.234e-56));
 }
 
+TEST_CASE("array_decimal32") {
+	auto_free<pn_data_t, pn_data_free> src(pn_data(1));
+	pn_data_clear(src);
+	pn_data_put_array(src, false, PN_DECIMAL32);
+	pn_data_enter(src);
+	pn_data_exit(src);
+	check_encode_decode(src);
+
+	pn_data_clear(src);
+	pn_data_put_array(src, false, PN_DECIMAL32);
+	pn_data_enter(src);
+	pn_data_put_decimal32(src, pn_decimal32_t(0));
+	pn_data_put_decimal32(src, pn_decimal32_t(0x01234567));
+	pn_data_exit(src);
+	check_encode_decode(src);
+}
+
+TEST_CASE("array_decimal64") {
+	auto_free<pn_data_t, pn_data_free> src(pn_data(1));
+	pn_data_clear(src);
+	pn_data_put_array(src, false, PN_DECIMAL64);
+	pn_data_enter(src);
+	pn_data_exit(src);
+	check_encode_decode(src);
+
+	pn_data_clear(src);
+	pn_data_put_array(src, false, PN_DECIMAL64);
+	pn_data_enter(src);
+	pn_data_put_decimal64(src, pn_decimal64_t(0));
+	pn_data_put_decimal64(src, pn_decimal64_t(0x0123456789abcdef));
+	pn_data_exit(src);
+	check_encode_decode(src);
+}
+
+TEST_CASE("array_decimal128") {
+	auto_free<pn_data_t, pn_data_free> src(pn_data(1));
+	pn_data_clear(src);
+	pn_data_put_array(src, false, PN_DECIMAL128);
+	pn_data_enter(src);
+	pn_data_exit(src);
+	check_encode_decode(src);
+
+	pn_data_clear(src);
+	pn_data_put_array(src, false, PN_DECIMAL128);
+	pn_data_enter(src);
+	pn_decimal128_t d1;
+	memset(d1.bytes, 0, sizeof(d1.bytes)); // set to all zeros
+	pn_data_put_decimal128(src, d1);
+	pn_decimal128_t d2;
+	char val[] = {'\x01', '\x23', '\x45', '\x67', '\x89', '\xab', '\xcd', '\xef', '\x01', '\x23', '\x45', '\x67', '\x89', '\xab', '\xcd', '\xef'};
+	memcpy(d2.bytes, val, sizeof(val)); // copy value
+	pn_data_put_decimal128(src, d2);
+	pn_data_exit(src);
+	check_encode_decode(src);
+}
+
 TEST_CASE("array_binary") {
 	check_array("@T[]", PN_BINARY);
-	check_array("@T[zzzzz]", PN_BINARY, 0, "", 2, "\x00\x00", 4, "\x00\x01\xfe\xff", 8, "abcdefgh", 16, "1234567890123456");
+	check_array("@T[ZZZZZ]", PN_BINARY, 0, "", 2, "\x00\x00", 4, "\x00\x01\xfe\xff", 8, "abcdefgh", 16, "1234567890123456");
 }
 
 TEST_CASE("array_string") {
