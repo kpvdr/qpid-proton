@@ -317,7 +317,12 @@ TEST_CASE("array_array") {
 TEST_CASE("array_list") {
 	check_array("@T[]", PN_LIST);
 	// TODO: PROTON-2248: using S and s reversed
+	// empty list as first array element
 	check_array("@T[[][oo][][iii][Sosid]]", PN_LIST, true, false, 1, 2, 3, "hello", false, "world", 43210, 2.565e-56);
+	// empty list not as first array element
+	check_array("@T[[Sid][oooo][]]", PN_LIST, "aaa", 123, double(3.2415), true, true, false, true);
+	// only empty lists
+	check_array("@T[[][][][][]]", PN_LIST);
 }
 
 TEST_CASE("array_map") {
