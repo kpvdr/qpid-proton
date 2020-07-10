@@ -25,10 +25,10 @@
 
 #include <proton/codec.h>
 #include <proton/error.h>
+#include <proton/type_compat.h> // ssize_t
 
 #include <cstdarg> // va_start(), va_end()
 #include <ctime> // time()
-#include <unistd.h> // ssize_t
 
 using namespace pn_test;
 
@@ -196,12 +196,12 @@ TEST_CASE("array_timestamp") {
 
 TEST_CASE("array_float") {
 	check_array("@T[]", PN_FLOAT);
-	check_array("@T[fffff]", PN_FLOAT, float(0.0), float(3.14), std::nanf, std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
+	check_array("@T[fff]", PN_FLOAT, float(0.0), float(3.14), float(1.234e56), float(-1.234e-56));
 }
 
 TEST_CASE("array_double") {
 	check_array("@T[]", PN_DOUBLE);
-	check_array("@T[ddddd]", PN_DOUBLE, double(0.0), double(3.1416), std::nan, std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity());
+	check_array("@T[ddd]", PN_DOUBLE, double(0.0), double(3.1416), double(1.234e56), double(-1.234e-56));
 }
 
 TEST_CASE("array_binary") {
@@ -230,7 +230,7 @@ TEST_CASE("array_array") {
 TEST_CASE("array_list") {
 	check_array("@T[]", PN_LIST);
 	// TODO: PROTON-2248: using S and s reversed
-	check_array("@T[[][oo][][iii][Sosid]]", PN_LIST, true, false, 1, 2, 3, "hello", false, "world", 43210, 2.565);
+	check_array("@T[[][oo][][iii][Sosid]]", PN_LIST, true, false, 1, 2, 3, "hello", false, "world", 43210, 2.565e-56);
 }
 
 TEST_CASE("array_map") {
