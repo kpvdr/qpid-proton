@@ -25,7 +25,6 @@
 
 #include <proton/codec.h>
 #include <proton/error.h>
-#include <proton/type_compat.h> // ssize_t
 
 #include <cstdarg> // va_start(), va_end()
 #include <ctime> // time()
@@ -126,13 +125,17 @@ static void check_array(const char *fmt, ...) {
 	va_end(ap);
 
 	// Encode src array to buf
-	ssize_t enc_size = pn_data_encode(src, buf, BUFSIZE - 1);
-	if (enc_size < 0) return;
+	int enc_size = pn_data_encode(src, buf, BUFSIZE - 1);
+	if (enc_size < 0) {
+		FAIL("pn_data_encode() error " << enc_size << ": " << pn_code(enc_size));
+	}
 
 	// Decode buf to data
-	ssize_t dec_size = pn_data_decode(data, buf, BUFSIZE - 1);
+	int dec_size = pn_data_decode(data, buf, BUFSIZE - 1);
 	pn_error_t *dec_err = pn_data_error(data);
-	if (dec_size < 0) return;
+	if (dec_size < 0) {
+		FAIL("pn_data_decode() error " << dec_size << ": " << pn_code(dec_size));
+	}
 
 	// Checks
 	CHECK(enc_size == dec_size);
