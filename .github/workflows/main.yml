@@ -24,9 +24,17 @@ jobs:
 
     - name: Configure cmake
       run: |
-        mkdir build
-        cd build
+        pwd
+        if [ -d build ]; then
+            cd build
+            make clean
+        else
+            mkdir build
+            cd build
+        fi
         cmake ..
 
     - name: Build proton
-      run: make
+      run: |
+        pwd
+        make
