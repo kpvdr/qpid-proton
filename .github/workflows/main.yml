@@ -24,13 +24,8 @@ jobs:
 
     - name: Configure cmake
       run: |
-        if not exist "build" (
-            cd build
-            make clean
-        ) else (
-            mkdir build
-            cd build
-        )
+        mkdir build
+        cd build
         cmake ..
         make
 
