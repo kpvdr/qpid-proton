@@ -27,6 +27,5 @@ jobs:
         mkdir build
         cd build
         cmake ..
-        set mypwd=%cd%
-        echo %mypwd%
+        Get-Location
 
