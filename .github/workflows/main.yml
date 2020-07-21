@@ -27,5 +27,6 @@ jobs:
         mkdir build
         cd build
         cmake ..
+        echo "pwd=%cd%"
         make
 
