@@ -28,5 +28,5 @@ jobs:
         cd build
         cmake ..
         echo "pwd=%cd%"
-        make
+        rem make
 
