@@ -27,5 +27,6 @@ jobs:
         mkdir build
         cd build
         cmake ..
-        echo %cd%
+        set mypwd=%cd%
+        echo %mypwd%
 
