@@ -34,4 +34,5 @@ jobs:
     - name: Test
       run: |
         cd build
-        cmake --build . --target test
+        Get-ChildItem -Path D:/a/qpid-proton/qpid-proton/build -Force
+
