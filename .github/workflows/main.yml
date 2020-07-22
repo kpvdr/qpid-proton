@@ -28,4 +28,4 @@ jobs:
         cd build
         cmake ..
         Get-ChildItem -Path D:/a/qpid-proton/qpid-proton/build -Force
-        cmake --build ..
+        cmake --build .
