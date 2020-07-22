@@ -32,4 +32,4 @@ jobs:
       run: |
         Get-Location
         Get-ChildItem -Path D:/a/qpid-proton/qpid-proton/build -Force
-        MSBuild ALL_BUILD.vcxproj
+        cmake --build ..
