@@ -27,5 +27,7 @@ jobs:
         mkdir build
         cd build
         cmake ..
-        Get-ChildItem -Path D:/a/qpid-proton/qpid-proton/build -Force
+    - name: Build
+      run: |
+        cd build
         cmake --build .
